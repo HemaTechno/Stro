@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء فاتورة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+            padding: 20px;
+            color: #333;
+        }
+        .invoice-container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #6a1b9a;
+            font-size: 28px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        input[readonly] {
+            background-color: #f3f3f3;
+        }
+        button {
+            background: #8e24aa;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background: #6a1b9a;
+        }
+        .hidden {
+            display: none;
+        }
+        .payment-box {
+            background: #fce4ec;
+            padding: 15px;
+            border: 2px solid #f06292;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .payment-box strong {
+            color: #d81b60;
+        }
+    </style>
+</head>
+<body>
+<div class="invoice-container">
+    <h1>إنشاء فاتورة</h1>
+    <form id="invoiceForm">
+        <label for="quantity">الكمية</label>
+        <input type="number" id="quantity" min="1" placeholder="أدخل الكمية" oninput="calculatePrice()" required>
+
+        <label for="price">السعر (جنيه مصري)</label>
+        <input type="text" id="price" readonly>
+
+        <button type="button" id="completeBtn" onclick="showPaymentInfo()">إكمال</button>
+
+        <div id="paymentInfo" class="hidden payment-box">
+            <p><strong>رقم تحويل فودافون كاش:</strong> 01099433038</p>
+            <p><strong>المبلغ المطلوب:</strong> <span id="requiredAmount"></span> جنيه مصري</p>
+            <button type="button" onclick="showAdditionalFields()">متابعة</button>
+        </div>
+
+        <div id="additionalFields" class="hidden">
+            <label for="link">رابط التيشيرت أو قيم باس</label>
+            <input type="url" id="link" placeholder="أدخل الرابط">
+
+            <label for="senderNumber">الرقم المرسل منه</label>
+            <input type="text" id="senderNumber" placeholder="أدخل رقم الهاتف المرسل منه">
+
+            <label for="whatsappNumber">رقم واتس للتواصل</label>
+            <input type="text" id="whatsappNumber" placeholder="أدخل رقم الواتس">
+
+            <label for="proof">دليل التحويل (رفع صورة)</label>
+            <input type="file" id="proof" accept="image/*">
+
+            <button type="button" onclick="submitInvoice()">إرسال للمراجعة</button>
+        </div>
+    </form>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-storage-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDoK427q44Fj87JhgZh2vKeUnACkjl8HDc",
+        authDomain: "treng-c6027.firebaseapp.com",
+        projectId: "treng-c6027",
+        storageBucket: "treng-c6027.appspot.com",
+        messagingSenderId: "305527546716",
+        appId: "1:305527546716:web:fd072a58200f31bb42d799",
+        measurementId: "G-3JFKFT2LT0"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage().ref();
+
+    function calculatePrice() {
+        const quantity = document.getElementById('quantity').value;
+        const price = quantity * 0.25;
+        document.getElementById('price').value = price.toFixed(2) + ' جنيه';
+    }
+
+    function showPaymentInfo() {
+        const quantity = document.getElementById('quantity').value;
+        if (quantity > 500) {
+            const price = quantity * 0.25;
+            document.getElementById('requiredAmount').innerText = price.toFixed(2);
+            document.getElementById('paymentInfo').classList.remove('hidden');
+            document.getElementById('completeBtn').classList.add('hidden');
+        } else {
+            alert('يرجى إدخال كمية صحيحة.');
+        }
+    }
+
+    function showAdditionalFields() {
+        document.getElementById('additionalFields').classList.remove('hidden');
+    }
+
+    async function submitInvoice() {
+        const quantity = document.getElementById('quantity').value;
+        const price = document.getElementById('price').value;
+        const link = document.getElementById('link').value;
+        const senderNumber = document.getElementById('senderNumber').value;
+        const whatsappNumber = document.getElementById('whatsappNumber').value;
+        const proof = document.getElementById('proof').files[0];
+
+        if (!quantity || !senderNumber || !whatsappNumber || !proof) {
+            alert('يرجى تعبئة جميع الحقول وإرفاق دليل التحويل.');
+            return;
+        }
+
+        try {
+            const proofRef = storage.child(`proofs/${Date.now()}_${proof.name}`);
+            await proofRef.put(proof);
+            const proofURL = await proofRef.getDownloadURL();
+
+            const invoiceRef = await db.collection('invoices').add({
+                quantity: parseInt(quantity),
+                price,
+                link,
+                senderNumber,
+                whatsappNumber,
+                proofURL,
+                status: 'قيد المراجعة',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            alert('تم إرسال الفاتورة بنجاح. رقم الفاتورة: ' + invoiceRef.id);
+            window.location.href = 'invoice-status.html?id=' + invoiceRef.id;
+        } catch (error) {
+            console.error('حدث خطأ أثناء إرسال الفاتورة:', error);
+            alert('حدث خطأ أثناء إرسال الفاتورة. يرجى المحاولة مرة أخرى.');
+        }
+    }
+</script>
+
+
+<!--Start of Tawk.to Script-->
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/67acccdb825083258e1433e4/1ijtg0eed';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
+<!--End of Tawk.to Script-->
+
+
+    
+</body>
+</html>
