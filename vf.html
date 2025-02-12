@@ -76,7 +76,9 @@
 
         <label for="price">السعر (جنيه مصري)</label>
         <input type="text" id="price" readonly>
-
+<label for="robux">عدد الروبكس المستلم</label>
+        <input type="text" id="robux" readonly>
+        
         <button type="button" id="completeBtn" onclick="showPaymentInfo()">إكمال</button>
 
         <div id="paymentInfo" class="hidden payment-box">
@@ -126,6 +128,20 @@
         const quantity = document.getElementById('quantity').value;
         const price = quantity * 0.25;
         document.getElementById('price').value = price.toFixed(2) + ' جنيه';
+    }
+
+    function calculatePrice() {
+        const quantity = document.getElementById('quantity').value;
+        if (quantity > 0) {
+            const price = quantity * 0.25;
+            document.getElementById('price').value = price.toFixed(2) + ' جنيه';
+
+            const robuxAfterTax = quantity * 0.7; // خصم 30% ضريبة
+            document.getElementById('robux').value = robuxAfterTax.toFixed(0) + ' روبكس';
+        } else {
+            document.getElementById('price').value = '';
+            document.getElementById('robux').value = '';
+        }
     }
 
     function showPaymentInfo() {
