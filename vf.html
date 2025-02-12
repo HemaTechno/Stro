@@ -190,7 +190,7 @@
             });
 
             alert('تم إرسال الفاتورة بنجاح. رقم الفاتورة: ' + invoiceRef.id);
-            window.location.href = 'invoice-status.html?id=' + invoiceRef.id;
+            window.location.href = 'check.html?id=' + invoiceRef.id;
         } catch (error) {
             console.error('حدث خطأ أثناء إرسال الفاتورة:', error);
             alert('حدث خطأ أثناء إرسال الفاتورة. يرجى المحاولة مرة أخرى.');
