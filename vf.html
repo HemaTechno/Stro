@@ -130,13 +130,13 @@
 
     function showPaymentInfo() {
         const quantity = document.getElementById('quantity').value;
-        if (quantity > 499) {
+        if (quantity > 99) {
             const price = quantity * 0.25;
             document.getElementById('requiredAmount').innerText = price.toFixed(2);
             document.getElementById('paymentInfo').classList.remove('hidden');
             document.getElementById('completeBtn').classList.add('hidden');
         } else {
-            alert('يرجى إدخال قيمة أكبر من 500 روبكس.');
+            alert('يرجى إدخال قيمة أكبر من 100 روبكس.');
         }
     }
 
