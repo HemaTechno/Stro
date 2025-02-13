@@ -95,6 +95,8 @@
             <tr><td colspan="4">جارٍ تحميل الفواتير...</td></tr>
         </tbody>
     </table>
+    <button id="deleteAllBtn" onclick="deleteAllInvoices()">حذف جميع الفواتير</button>
+
 </div>
 
     <!-- Firebase SDK -->
@@ -140,6 +142,30 @@
         });
     }
 
+async function deleteAllInvoices() {
+    if (confirm('هل أنت متأكد أنك تريد حذف جميع الفواتير؟ لا يمكن التراجع عن هذا الإجراء.')) {
+        try {
+            const snapshot = await db.collection('invoices').get();
+            const batch = db.batch();
+
+            snapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+
+            await batch.commit();
+            alert('تم حذف جميع الفواتير بنجاح.');
+            listenForInvoices(); // لإعادة تحميل الفواتير بعد الحذف
+        } catch (error) {
+            console.error('حدث خطأ أثناء حذف الفواتير:', error);
+            alert('حدث خطأ أثناء حذف الفواتير. يرجى المحاولة مرة أخرى.');
+        }
+    }
+}
+
+
+
+
+        
     function addInvoiceRow(id, data) {
         const table = document.getElementById('invoicesTable');
         const row = document.createElement('tr');
