@@ -3,40 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوابة دفع Kashier</title>
-    <script src="https://accept.kashier.io/kashier-checkout.js"></script>
+    <title>بوابة الدفع عبر Kashier</title>
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #f9f9f9;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <h1>إتمام الدفع</h1>
-    <button id="payBtn">إتمام الدفع</button>
+    <div class="container">
+        <h1>الدفع عبر Kashier</h1>
+        <form id="paymentForm">
+            <label for="amount">المبلغ المطلوب (جنيه مصري)</label>
+            <input type="number" id="amount" placeholder="أدخل المبلغ" required>
+            
+            <label for="proof">رفع دليل التحويل (صورة)</label>
+            <input type="file" id="proof" accept="image/*" required>
+            
+            <button type="submit">إتمام الدفع</button>
+        </form>
+    </div>
 
     <script>
-        document.getElementById('payBtn').addEventListener('click', function() {
-            KashierCheckout.showFrame({
-                amount: 100,  // استبدل 100 بالمبلغ الذي ترغب في تحصيله
-                currency: "EGP",  // العملة
-                merchantId: "fafe0059-a484-4077-b7c6-210eea5580ad",  // Merchant ID الخاص بك
-                orderId: "ORDER12345",  // رقم الطلب الخاص بك
-                redirectUrl: "https://example.com/thank-you",  // الرابط الذي يتم التوجيه إليه بعد الدفع
-                billingData: {
-                    firstName: "اسم المستخدم",
-                    lastName: "اللقب",
-                    email: "user@example.com",
-                    phoneNumber: "01000000000"
-                },
-                onClose: function() {
-                    alert('تم إغلاق نافذة الدفع.');
-                },
-                onSuccess: function(response) {
-                    console.log('تمت عملية الدفع بنجاح:', response);
-                    alert('شكراً! تمت عملية الدفع بنجاح.');
-                },
-                onFailure: function(error) {
-                    console.error('حدث خطأ أثناء الدفع:', error);
-                    alert('فشلت عملية الدفع. يرجى المحاولة مرة أخرى.');
+        const apiKey = "fafe0059-a484-4077-b7c6-210eea5580ad";  // استخدم المفتاح الخاص بك
+        const apiUrl = "https://api.kashier.io/payments";
+
+        document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const amount = document.getElementById('amount').value;
+            const proofFile = document.getElementById('proof').files[0];
+
+            if (!proofFile) {
+                alert("يرجى رفع صورة دليل التحويل.");
+                return;
+            }
+
+            try {
+                // رفع دليل التحويل إلى Firebase أو السيرفر
+                const proofUrl = await uploadProof(proofFile);
+                
+                // إنشاء طلب الدفع
+                const response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        amount: amount * 100,  // تحويل المبلغ إلى قروش
+                        currency: "EGP",
+                        description: "طلب دفع عبر Kashier",
+                        metadata: {
+                            proof: proofUrl
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert("تم إرسال الطلب بنجاح. سيتم التواصل معك قريبًا.");
+                    console.log("Response:", data);
+                } else {
+                    alert("حدث خطأ أثناء معالجة الطلب.");
+                    console.error(data);
                 }
-            });
+            } catch (error) {
+                console.error("Error:", error);
+                alert("حدث خطأ أثناء إرسال الطلب.");
+            }
         });
+
+        async function uploadProof(file) {
+            // مثال على رفع الصورة إلى Firebase Storage
+            return new Promise((resolve) => {
+                setTimeout(() => resolve("https://example.com/proof-url.jpg"), 1000);
+            });
+        }
     </script>
 </body>
 </html>
