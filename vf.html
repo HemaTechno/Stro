@@ -129,14 +129,14 @@
 
     function calculatePrice() {
         const quantity = document.getElementById('quantity').value;
-        const price = quantity * 5.25;
+        const price = quantity * 0.255;
         document.getElementById('price').value = price.toFixed(2) + ' جنيه';
     }
 
     function calculatePrice() {
         const quantity = document.getElementById('quantity').value;
         if (quantity > 0) {
-            const price = quantity * 5.25;
+            const price = quantity * 0.255;
             document.getElementById('price').value = price.toFixed(2) + ' جنيه';
 
             const robuxAfterTax = quantity * 0.7; // خصم 30% ضريبة
